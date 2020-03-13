@@ -1,0 +1,6 @@
+check_short_url/main
+short_url/url/migrations
+*.log
+*.pot
+*.pyc
+__pycache__
