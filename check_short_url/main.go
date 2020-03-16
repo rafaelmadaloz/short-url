@@ -1,106 +1,94 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"time"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-	_ "github.com/lib/pq"
-	"sync"
-	"context"
-)	
+	"time"
+)
+
+const INTERVAL = 1 // minutes
+const GROUPWORKERS = 10
 
 var ctx context.Context
-var db, db_err = sql.Open("postgres", "user=root password=root dbname=short_url sslmode=disable")
-const INTERVAL = 1 // minutes
+var db, db_err = sql.Open("postgres", "user=postgres password=postgres dbname=short_url sslmode=disable")
+
+type Url struct {
+	Id  int
+	Url string
+	Status int
+}
 
 func main() {
-	checkConnetionBd()
+	if db_err != nil {
+		log.Fatal(db_err)
+	}
 	defer db.Close()
-	
-	queryGetUrls := fmt.Sprintf("SELECT id, short_url FROM url_url WHERE ((last_check < NOW() - INTERVAL '%d minutes') or (last_check is NULL));", INTERVAL) 
-	queryCountUrls := fmt.Sprintf("SELECT count(*) FROM url_url WHERE ((last_check < NOW() - INTERVAL '%d minutes') or (last_check is NULL));", INTERVAL)
-	queryGetOlderCheckUrl := "SELECT last_check FROM url_url ORDER BY last_check ASC"
-	var countUrls int
+
+	queryGetUrls := fmt.Sprintf("SELECT id, short_url FROM url_url WHERE ((last_check < NOW() - INTERVAL '%d minutes') or (last_check is NULL));", INTERVAL)
 
 	for {
-		err := db.QueryRow(queryCountUrls).Scan(&countUrls)   
+		rows, err := db.Query(queryGetUrls)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer rows.Close()
 
-		if countUrls > 0 {
-			createGroupsToCheckUrls(countUrls, queryGetUrls)
-		} else {
-			waitToCheckUrls(queryGetOlderCheckUrl)
-		}
-	}
-}
-
-func createGroupsToCheckUrls(countUrls int, queryGetUrls string) {
-	numGroups := 10
-	if countUrls < 10 {
-		numGroups = countUrls
-	}
-
-	fmt.Printf("Num of groups: %v \n", numGroups)
-
-	rows, err := db.Query(queryGetUrls)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var wg sync.WaitGroup
-	for i := 0; i < numGroups; i++ {
-		wg.Add(1)
-		go func(jobID int) {
-			checkUrls(rows, jobID)
-			defer wg.Done()
-		}(i)
-	}
-
-	wg.Wait()
-}
-
-func waitToCheckUrls(queryGetOlderCheckUrl string) {
-	var olderTime time.Time
-	err := db.QueryRow(queryGetOlderCheckUrl).Scan(&olderTime)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	timeWait := (olderTime.Add(INTERVAL * time.Minute)).Sub(time.Now())
-
-	fmt.Printf("Sleeping for %v \n", timeWait)
-	fmt.Printf("Older Time %v \n", olderTime)
-	time.Sleep(timeWait)
-}
-
-func checkConnetionBd() {
-	if db_err != nil {
-		log.Fatal(db_err)
-	}
-
-	db_err = db.Ping()
-	if db_err != nil {
-		log.Fatal(db_err)
-	}
-}
-
-func checkUrls(urls *sql.Rows, jobID int) {
-	for urls.Next() {
-		var url string
+		var urls []Url
 		var id int
-		if err := urls.Scan(&id, &url); err != nil {
+		var short_url string
+		for rows.Next() {
+			err := rows.Scan(&id, &short_url)
+			if err != nil {
 				log.Fatal(err)
+			}
+
+			urls = append(urls, Url{Id: id, Url: short_url})
 		}
-		statusCode := makeRequestAndUpdate(id, url)
-		fmt.Printf("ID: %d - %s - Job ID %d - Status %d\n", id, url, jobID, statusCode)
+		if err := rows.Err(); err != nil {
+			log.Fatal(err)
+		}
+		if len(urls) > 0 {
+			createGroupsToCheckUrls(urls)
+		} else {
+			fmt.Println("Sleeping for 1 minute")
+			time.Sleep(time.Minute)
+		}
 	}
 }
 
-func makeRequestAndUpdate(id int, url string) int{
+func createGroupsToCheckUrls(urls []Url) {
+    job := make(chan Url)
+    result := make(chan bool)
+
+	for w := 1; w <= GROUPWORKERS; w++ {
+        go checkUrl(w, job, result)
+	}
+
+	for _, url := range urls {
+		job <- url
+	}
+
+	close(job)
+
+	for a := 1; a <= len(urls); a++ {
+        <-result
+    }
+}
+
+func checkUrl(id int, job <-chan Url, result chan<- bool) {
+	for url := range job {
+	    fmt.Println("worker", id, "started ", url.Url)
+		makeRequestAndUpdate(url.Id, url.Url)
+		fmt.Println("worker", id, "finished ", url.Url)
+        result <- true
+	}
+}
+
+func makeRequestAndUpdate(id int, url string) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := client.Do(req)
@@ -113,11 +101,9 @@ func makeRequestAndUpdate(id int, url string) int{
 	} else {
 		statusCode = resp.StatusCode
 	}
-	
+
 	_, err = db.Exec(queryUpdateStatus, id, timeNow, statusCode)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return statusCode
 }
