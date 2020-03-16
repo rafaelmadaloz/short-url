@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -61,6 +62,7 @@ func main() {
 }
 
 func createGroupsToCheckUrls(urls []Url) {
+	var wg sync.WaitGroup
     job := make(chan Url)
     result := make(chan bool)
 
@@ -76,7 +78,9 @@ func createGroupsToCheckUrls(urls []Url) {
 
 	for a := 1; a <= len(urls); a++ {
         <-result
-    }
+	}
+
+	wg.Wait()
 }
 
 func checkUrl(id int, job <-chan Url, result chan<- bool) {
