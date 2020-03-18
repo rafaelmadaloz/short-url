@@ -1,0 +1,28 @@
+{% extends 'url/base.html' %}
+
+{% block content %}
+
+    <a class="btn btn-primary mt-3" href="/new" role="button">Add +</a>
+
+    <table class="table table-hover mt-3">
+        <thead>
+            <tr>
+            <th scope="col">Short URL</th>
+            <th scope="col">URL</th>
+            <th scope="col">Last Check</th>
+            <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for url in urls %}
+            <tr>
+            <th scope="row"><a href="{{url.short_url}}" >{{ url.short_url }}</a></th>
+            <td>{{ url.url }}</td>
+            <td>{{ url.last_check | default_if_none:"--" }}</td>
+            <td>{{url.last_check_status | default_if_none:"--" }}</td>
+            </tr>
+            <tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

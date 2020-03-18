@@ -1,0 +1,22 @@
+{% extends 'url/base.html' %}
+
+{% block content %}
+
+    <form method="post" class="mt-3">{% csrf_token %}
+
+            {% for field in form %}
+                    {% for error in field.errors %}
+                        <strong>{{ error|escape }}</strong>
+            {% endfor %}
+            <div class="fieldWrapper form-group" aria-required={% if field.field.required %}"true"{% else %}"false"{% endif %}>
+                {{ field.label_tag }}{% if field.field.required %}<span class="required">*</span>{% endif %}
+                {{ field }}
+                {% if field.help_text %}
+                <p class="help">{{ field.help_text|safe }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+{% endblock %}

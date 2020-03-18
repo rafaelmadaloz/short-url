@@ -2,8 +2,8 @@ from django.db import models
 
 
 class Url(models.Model):
-    url = models.CharField(max_length=512)
-    short_url = models.CharField(max_length=64, blank=True)
+    url = models.URLField(max_length=512)
+    short_url = models.URLField(max_length=64, blank=True)
     last_check = models.DateTimeField(blank=True, null=True)
     last_check_status = models.IntegerField(blank=True, null=True)
 
