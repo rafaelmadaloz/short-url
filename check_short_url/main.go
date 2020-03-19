@@ -13,13 +13,14 @@ import (
 
 const INTERVAL = 1 // minutes
 const GROUPWORKERS = 10
+const BASEURL = "http://127.0.0.1:8000/"
 
 var ctx context.Context
 var db, db_err = sql.Open("postgres", "user=postgres password=postgres dbname=short_url sslmode=disable")
 
 type Url struct {
-	Id  int
-	Url string
+	Id     int
+	Url    string
 	Status int
 }
 
@@ -63,11 +64,11 @@ func main() {
 
 func createGroupsToCheckUrls(urls []Url) {
 	var wg sync.WaitGroup
-    job := make(chan Url)
-    result := make(chan bool)
+	job := make(chan Url)
+	result := make(chan bool)
 
 	for w := 1; w <= GROUPWORKERS; w++ {
-        go checkUrl(w, job, result)
+		go checkUrl(w, job, result)
 	}
 
 	for _, url := range urls {
@@ -77,7 +78,7 @@ func createGroupsToCheckUrls(urls []Url) {
 	close(job)
 
 	for a := 1; a <= len(urls); a++ {
-        <-result
+		<-result
 	}
 
 	wg.Wait()
@@ -85,15 +86,18 @@ func createGroupsToCheckUrls(urls []Url) {
 
 func checkUrl(id int, job <-chan Url, result chan<- bool) {
 	for url := range job {
-	    fmt.Println("worker", id, "started ", url.Url)
+		fmt.Println("worker", id, "started ", url.Url)
 		makeRequestAndUpdate(url.Id, url.Url)
 		fmt.Println("worker", id, "finished ", url.Url)
-        result <- true
+		result <- true
 	}
 }
 
 func makeRequestAndUpdate(id int, url string) {
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	url = BASEURL + url
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := client.Do(req)
 	timeNow := time.Now()
