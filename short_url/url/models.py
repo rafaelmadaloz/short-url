@@ -1,9 +1,11 @@
 from django.db import models
 
+from hashids import Hashids
+
 
 class Url(models.Model):
-    url = models.URLField(max_length=512)
-    short_url = models.URLField(max_length=64, blank=True)
+    url = models.URLField(max_length=512, unique=True)
+    short_url = models.URLField(max_length=64, blank=True, unique=True)
     last_check = models.DateTimeField(blank=True, null=True)
     last_check_status = models.IntegerField(blank=True, null=True)
 
@@ -14,5 +16,8 @@ class Url(models.Model):
         if not self.pk:
             super().save()
 
-        self.short_url = "http://127.0.0.1:8000/" + str(hex(self.pk)[2:])
+        hashids = Hashids(salt='IIm54tostyz6tWoIJukG')
+        hashid = hashids.encode(self.pk)
+
+        self.short_url = hashid
         return super().save()
