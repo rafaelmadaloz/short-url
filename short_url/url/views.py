@@ -6,22 +6,20 @@ from hashids import Hashids
 
 from url.models import Url
 from url.forms import UrlForm
-
+from url.utils.hash import hashids
 
 
 def redirect_url(request, hash_id):
-    hashids = Hashids(salt='IIm54tostyz6tWoIJukG')
     hashid = hashids.decode(hash_id)
     url_id = str(hashid[0])
     url = get_object_or_404(Url, pk=url_id)
     return redirect(url.url)
 
+
 def delete_url(request, hash_id):
-    hashids = Hashids(salt='IIm54tostyz6tWoIJukG')
     hashid = hashids.decode(hash_id)
     url_id = str(hashid[0])
-    url = Url.objects.get(pk=url_id)
-    url.delete()
+    url = Url.objects.filter(pk=url_id).delete()
     return redirect('url:url_list')
 
 

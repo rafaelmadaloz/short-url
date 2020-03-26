@@ -2,6 +2,7 @@ from django import forms
 
 from url.models import Url
 
+
 class UrlForm(forms.ModelForm):
     url = forms.CharField(
                         label="URL",
