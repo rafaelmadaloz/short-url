@@ -1,0 +1,47 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-03-27 16:49-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: url/views.py:35
+msgid "Submit"
+msgstr "Salvar"
+
+#: url/views.py:48
+msgid "Short URL"
+msgstr "URL Curta"
+
+#: url/views.py:49
+msgid "URL"
+msgstr "URL"
+
+#: url/views.py:50
+msgid "Last Check"
+msgstr "Última Verificação"
+
+#: url/views.py:51
+msgid "Status"
+msgstr "Status"
+
+#: url/views.py:52
+msgid "Delete"
+msgstr "Apagar"
+
+#: url/views.py:54
+msgid "Add"
+msgstr "Adicionar"

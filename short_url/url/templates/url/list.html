@@ -2,16 +2,16 @@
 
 {% block content %}
 
-    <a class="btn btn-primary mt-3" href="{% url 'url:add_url' %}" role="button">Add +</a>
+    <a class="btn btn-primary mt-3" href="{% url 'url:add_url' %}" role="button">{{ add_button }} +</a>
 
     <table class="table table-hover mt-3">
         <thead>
             <tr>
-            <th scope="col">Short URL</th>
-            <th scope="col">URL</th>
-            <th scope="col">Last Check</th>
-            <th scope="col">Status</th>
-            <th scope="col">Delete</th>
+            <th scope="col">{{ table_indexes.short_url }}</th>
+            <th scope="col">{{ table_indexes.url }}</th>
+            <th scope="col">{{ table_indexes.last_check }}</th>
+            <th scope="col">{{ table_indexes.status }}</th>
+            <th scope="col">{{ table_indexes.delete }}</th>
             </tr>
         </thead>
         <tbody>

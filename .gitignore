@@ -5,3 +5,4 @@ check_short_url/main
 __pycache__
 env
 .vscode
+short_url/static
